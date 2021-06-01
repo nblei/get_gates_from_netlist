@@ -1,0 +1,12 @@
+[package]
+name = "gate_lister"
+version = "0.1.0"
+authors = ["Nathan Bleier <nbleier3@illinois.edu>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+sv-parser = "0.11.1"
+clap = { "version" = "3.0.0-beta.2", "features" = ["yaml"] }
+
