@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::env;
 use std::path::PathBuf;
 use sv_parser::{parse_sv, unwrap_node, Locate, RefNode};
 
@@ -13,34 +12,50 @@ fn main() {
         .arg(Arg::new("NETLIST")
              .about("input netlist")
              .required(true)
-             .index(1)).get_matches();
+             .index(1))
+        .arg(Arg::new("count")
+             .about("print the number of gates in netlist")
+             .required(false)
+             .short('c')
+             .long("count")
+        ).get_matches();
 
     let path = PathBuf::from(matches.value_of("NETLIST").unwrap());
-    gate_parser(path);
+    let gate_count = matches.is_present("count");
+    gate_parser(path, gate_count);
 }
 
 
-fn gate_parser(path: PathBuf) {
+fn gate_parser(path: PathBuf, count: bool) {
     let defines = HashMap::new();
     let includes: Vec<PathBuf> = vec![];
+    let mut gate_count = 0;
 
     let result = parse_sv(&path, &defines, &includes, false, false);
     
     if let Ok((st, _)) = result {
         for node in &st {
             if let RefNode::ModuleInstantiation(x) = node {
-                let modid = unwrap_node!(x, ModuleIdentifier).unwrap();
-                let instid = unwrap_node!(x, InstanceIdentifier).unwrap();
-                let modid = get_identifier(modid).unwrap();
-                let instid = get_identifier(instid).unwrap();
-                let modid = st.get_str(&modid).unwrap();
-                let instid = st.get_str(&instid).unwrap();
-                println!("{}\t{}", modid, instid);
+                gate_count += 1;
+                if !count {
+                    let modid = unwrap_node!(x, ModuleIdentifier).unwrap();
+                    let instid = unwrap_node!(x, InstanceIdentifier).unwrap();
+                    let modid = get_identifier(modid).unwrap();
+                    let instid = get_identifier(instid).unwrap();
+                    let modid = st.get_str(&modid).unwrap();
+                    let instid = st.get_str(&instid).unwrap();
+                    println!("{}\t{}", modid, instid);
+                }
             } else {
                 // println!("Not a module!");
             }
         }
-
+    }
+    else {
+        panic!("unable to parse netlist");
+    }
+    if count {
+        println!("{}", gate_count);
     }
 }
 
